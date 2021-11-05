@@ -1,0 +1,22 @@
+node("ansible_docker"){
+    stage("Git checkout"){
+        git credentialsId: 'github-ssh-key', url: 'git@github.com:wonderphp/example-playbook'
+    }
+    stage("Check ssh key"){
+        secret_check=true
+    }
+    stage("Run playbook"){
+        if (secret_check){
+                sh "ansible-vault decrypt secret --vault-password-file vault_pass"
+                sh "mkdir -p ~/.ssh/"
+                sh "mv ./secret ~/.ssh/id_rsa"
+                sh "chmod 400 ~/.ssh/id_rsa"
+                sh 'ansible-galaxy install -r requirements.yml -p roles'
+                sh 'ansible-playbook site.yml -i inventory/prod.yml'
+        }
+        else{
+            echo 'no more keys'
+        }
+
+    }
+}
